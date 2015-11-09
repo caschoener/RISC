@@ -1,186 +1,101 @@
-// Simple Expression Evaluation Implementation file
-// This describes the functionality for evaluating very simple
-// arithmetic expressions.  Given a string consisting of operators
-// and operands, it will evaluate that expression and return its value.
-//
-// The expressions may consist of the following:
-// -- single-digit integer values
-// -- simple arithmetic operators ( +, -, *, /, % )
-// -- matched parentheses for grouping
+// evaluates with postfix
 
-// This implementation consists of a set of mutually-recursive 
-// functions. which will track the structure of the expression.
-//
-// A sum expression is the sum or difference of one or more products.
-// A product expression is the product or quotient of one or more factors.
-// A factor may be a number or a parenthesized sum expression.
 using namespace std;
-
-#include "tokenize.h"
 #include <iostream>
+#include "tokenlist.h"
+#include "token.h"
 
-int parens(const char[], int&);
-int mult(const char[], int&);
-int add(const char[], int&);
-int findlength(const char[]);
+void add(ListIterator &, TokenList &);
+void mult(ListIterator &, TokenList &);
+void parens(ListIterator &, TokenList &);
 
 
-// linearly walk through function and evaluate chunks
-int evaluate(const char expr[])
+
+int evaluate(const char exin[])
 {
-	int length = findlength(expr);
-	int current = 0, sum = 0;
-	char term;
-	findFirstToken(expr, current);
-	while (current < length) // iterate through function
+	TokenList expr(exin), postfix, sum;
+	ListIterator curr = expr.begin();
+
+	add(curr, postfix);
+	cout << "infix version:  " << postfix << '/n';
+	Token temp;
+	while (!postfix.empty())
 	{
-		term = expr[current];
-		if (term == '(')
+		temp = postfix.pop_front();
+		if (temp.isInteger())
 		{
-			// Find 2nd parenthesis
-			int counter = 1, end = current;
-			advance(expr, end);
-			while (counter != 0)  // find other )
-			{
-				if (expr[end] == '(')
-					counter += 1;
-				if (expr[end] == ')')
-					counter -= 1;
-				advance(expr, end);
-			}
-			if (expr[end] == '*' || expr[end] == '/' || expr[end] == '%')
-			{
-				current = end;
-				sum +=mult(expr, current);
-			}
-			else
-				sum += parens(expr, current);
-
+			sum.push_front(temp);
 		}
-		if (term == '+' || term == '-')
-			sum += add(expr, current);
-		if (term == '*' || term == '/' || term == '%')
-			sum += mult(expr, current);
 		else
-			advance(expr, current);
+		{
+			int a = sum.pop_front().integerValue();
+			int b = sum.pop_front().integerValue();
+			switch (temp.tokenChar()){
+			case '+':
+				sum.push_front(b + a);
+				break;
+			case '-':
+				sum.push_front(b - a);
+				break;
+			case '*':
+				sum.push_front(b*a);
+				break;
+			case '/':
+				sum.push_front(b / a);
+				break;
+			case '%':
+				sum.push_front(b % a);
+				break;
+			}
+		}
 	}
-	// deal with fringe cases of addition
-	goback(expr, current);
-	int extra = integerValue(expr, current);
-	goback(expr, current);
-	if (expr[current] == '+')
-		sum += extra;
-	if (expr[current] == '-')
-		sum -= extra;
 
-
-	return sum;
+	return sum.pop_front().integerValue();
 }
 
-int parens(const char expr[], int& current)
+void add(ListIterator &curr, TokenList &postfix)
 {
-	cout << "parens";
-	advance(expr, current);
-	int end  = current;
-	int counter = 1;
-	// Find 2nd parenthesis
-	while (counter != 0)  // find other )
+	char oper;
+	mult(curr, postfix);
+	oper = curr.tokenChar();
+	while (oper == '+' || oper == '-')
 	{
-		if (expr[end] == '(')
-			counter += 1;
-		if (expr[end] == ')')
-			counter -= 1;
-		else
-			advance(expr, end);
+		curr.advance();
+		mult(curr, postfix);
+		postfix.push_back(oper);
+		oper = curr.tokenChar();
 	}
-	char term;
-	int sum = 0;
-	while (current <= end) // iterate through function
+}
+//mult
+//called by add, multiplies all terms until it reaches a +,-, or )
+//calls paren to find value of terms which are multiplied together
+void mult(ListIterator &curr, TokenList &postfix)
+{
+	parens(curr,postfix);
+	while (curr.tokenChar() == '*' || curr.tokenChar() == '/' || curr.tokenChar() == '%')
 	{
-		term = expr[current];
-		if (term == '(')
-			sum += parens(expr, current);
-		if (term == '+' || term == '-')
-			sum += add(expr, current);
-		if (term == '*' || term == '/' || term == '%')
-			sum += mult(expr, current);
-		else
-			advance(expr, current);
+		char tok = curr.tokenChar();
+		curr.advance();
+		parens(curr, postfix);
+		postfix.push_back(tok);
 	}
-	// deal with fringe cases of addition
-	goback(expr, current);
-	int extra = integerValue(expr, current);
-	goback(expr, current);
-	if (expr[current] == '+')
-		sum += extra;
-	if (expr[current] == '-')
-		sum -= extra;
-
-	cout << expr[current];
-
-	return sum;
 }
 
-
-
-int mult(const char expr[], int& current)
+//paren
+//called by mult, finds value of chunk inside operators
+//returns either standalone integer or calls add to find value of expression inside ( )
+void parens(ListIterator &curr, TokenList &postfix)
 {
-	cout << "mult ";
-	int reverse = current, flag, left, right;
-	advance(expr, current);
-	if (expr[current] == '*')
-		flag = 1;
-	if (expr[current] == '/')
-		flag = 0;
-	if (expr[current] == '%')
-		flag = 2;
-	while (expr[reverse != '+' && expr[reverse] != '-') // solve right
 
-
-
-	while (expr[current != '+' && expr[current] != '-') // solve right
-
-
-
-	return 20;
-
-}
-
-
-// find left and right with mult or paren, add left and right
-int add(const char expr[], int& current)
-{
-	cout << "add ";
-	int sum, flag;
-	int reverse = current;
-	if (expr[current] == '+')
-		flag = 1;
-	if (expr[current] == '-')
-		flag = 0;
-
-	goback(expr, reverse);
-	advance(expr, current);
-	int left = integerValue(expr, reverse), right = integerValue(expr, current);
-	goback(expr, reverse);
-	advance(expr, current);
-
-	if (expr[reverse] == '*' || expr[reverse] == '/' || expr[reverse] == '%')
-		left = mult(expr, reverse);
-	if (expr[current] == '*' || expr[current] == '/' || expr[current] == '%')
-		right = mult(expr, current);
-	if (flag == 1)
-		sum = left + right;
-	if (flag == 0)
-		sum = left-right;
-	return sum;
-}
-
-int findlength(const char expr[])
-{
-	int i = 0;
-	while (expr[i] != '\0')
+	if (curr.currentIsInteger())
 	{
-		i += 1;
+		postfix.push_back(curr.integerValue());
+		curr.advance();
 	}
-	return i;
+	else
+	{
+		curr.advance();
+		add(curr,postfix);
+		curr.advance();
+	}
 }

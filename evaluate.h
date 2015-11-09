@@ -12,7 +12,4 @@
 // There is no specification on the length of any expression.
 #include "tokenlist.h"
 int evaluate(const char[]);
-int add(TokenList, ListIterator &);
-int mult(TokenList, ListIterator &);
-int parens(TokenList, ListIterator &);
 

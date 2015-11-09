@@ -1,75 +1,124 @@
 // Token List Implementation file
-// Not a true linked list; just support for iterators
-#include <iostream>
+//
+// This tokenizer will scan a character string representing
+// an expression, and will return a list of tokens.
+// --- only integers and operators are supported (no names)
+
+// The standard C library has some useful functions for us
 #include <string.h>
 #include <ctype.h>
-using namespace std;
+
+// And to get the definition of a token:
 #include "tokenlist.h"
+
+// TokenList constructor
+// converts a character string into a list of tokens
+// Parameter:
+// 	expr	(input char pointer)	// string to examine
+// Pre-condition:  str may not be a null pointer
+//     and is assumed to actually point at a valid expression.
+TokenList::TokenList( const char expr[])
+{
+    head = NULL;			// clear these here too
+    tail = NULL;
+	head = new ListElement;
+	int i = 0;
+	ListElement *iter;
+	iter = head;
+	while (expr[i] == ' ')
+		i++;
+	if (isdigit(expr[i]))
+		iter->token = expr[i] - 48;
+	else
+		iter->token = expr[i];
+	while (expr[i+1] != NULL)
+	{
+		i++;
+		if (expr[i] != ' ') // for each token in expression
+		{
+			iter->next = new ListElement;
+			iter = iter->next;
+			if (isdigit(expr[i]))
+				iter->token =  expr[i] - 48;
+			else
+				iter->token = expr[i];
+		}
+	}
+	tail = iter;
+	tail->next = NULL;
+}
 
 //  output operation
 //  Display all of the tokens in the list
-//  Parameters:
-//  	stream	(modified output stream)	where to output to
-//	t	(input reference to TokenList)	what to output
-//  Returns:
-//  	output stream, for use by additional << operators
 ostream& operator<<( ostream &stream, TokenList &t )
 {
-    for (ListIterator iter = t.begin(); iter != t.end(); iter.advance() )
+    for (ListIterator iter = t.begin(); iter != t.end(); iter.advance())
     {
-	if (iter.currentIsInteger())		// output a number
-	    stream << iter.integerValue() << " ";
-	else					// output a character
-	    stream << iter.tokenChar() << " ";
+	stream << iter.token() << " ";
     }
     return stream;
 }
 
-//  begin
-//  Creates an iterator to refer to the beginning of the data
-//  HINT:  This does the same thing as "findFirstToken"
+//  Creates an iterator to refer to the beginning of the list
 ListIterator TokenList::begin()
 {
-    int pos = 0;
-	while (data[pos] == ' ')
-	{
-		pos += 1;
-	}
-
-    return ListIterator( this, &data[pos] );
+    return ListIterator( this, head );
 }
 
-//  end
-//  Creates an iterator to refer to the end of the data
-//  The end is indicated by a null character in the array.
+//  Creates an iterator to refer after the end of the list
+//  This list is simple:  it ends with NULL
 ListIterator TokenList::end()
 {
-    return ListIterator( this, &data[strlen(data)] );
+    return ListIterator( this, NULL );
 }
 
-//  advance
-//  moves the iterator to the next token
-//  (indicated by a non-space character)
-//  NOTE:  The current token could have been a number with multiple digits
-void ListIterator::advance()	
+//  Add a new element to the back of the list
+//  Parameter:
+//       t	(input Token)	the new item to add
+void TokenList::push_back(Token t)
 {
-	curr += 1;
-	while (currentIsInteger()) // if token is integer, advance until it no longer is
+	if (head == NULL)
 	{
-		curr += 1;
+		head = new ListElement;
+		head->token = t;
+		head->next = tail;
 	}
-	while (tokenChar() == ' ')
-		curr += 1;
+	else if (tail == NULL)
+	{
+		tail = new ListElement;
+		tail->token = t;
+		head->next = tail;
+	}
+	else
+	{
+		tail->next = new ListElement;
+		tail = tail->next;
+		tail->token = t;
+		tail->next = NULL;
+	}
+}
+
+//  Add a new element to the front of the list
+//  Parameter:
+//       t	(input Token)	the new item to add
+void TokenList::push_front(Token t)
+{
+	ListElement *temp;
+	temp = new ListElement;
+	temp->next = head;
+	temp->token = t;
+	head = temp;
 
 }
 
-void ListIterator::retreat()
+//  Remove and return the element at the front of the list
+Token TokenList::pop_front()
 {
-	curr -= 1;
-	while (isdigit(*(curr-1))) // if token is integer, return to first
-	{
-		curr -= 1;
-	}
-	while (tokenChar() == ' ')
-		curr -= 1;
+	if (head == NULL)
+		return '/0';
+	ListElement *temp;
+	temp = head;
+	head = head->next;
+
+	return temp->token;
 }

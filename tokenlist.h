@@ -1,25 +1,61 @@
 // Token List Header file
-// This header file primarily implements an Iterator for
-// visiting the tokens of an arithmetic expression.
-// This is not really a list yet (that comes later),
-// but a class is defined to allow complete iterator support.
+// This is a linked list for use with the tokens for an
+// arithmetic expression.  Although it is used for that
+// particular application, this implementation mroe
+// resembles a generic linked list, which may be used
+// either as a stack or a queue.
 
-#include <stdlib.h>
-#include <ctype.h>
+// There will be support for displaying the entire list at once
+#include <iostream>
 using namespace std;
 
-class ListIterator;		// class definition below
+// And of course, the tokens themselves
+#include "token.h"
+
+// Since this is a linked list, we actually need a linked list node.
+struct ListElement {
+    Token		token;		// the token data itself
+    struct ListElement *next;		// next element of list
+};
+
+class ListIterator;			// class definition later
 
 class TokenList  {
     friend class ListIterator;
-	friend ostream& operator<<( ostream &, TokenList &);
+    friend ostream& operator<<( ostream &, TokenList &);
     private:
-	const char *data;	// the actual string data
+	ListElement *head, 	// front of the list
+	            *tail;	// tail of the list
     public:
-	TokenList( const char expr[] )	// start with initial data
+	TokenList()		// create an empty list
 	{
-	    data = expr;
+	    head = NULL;
+	    tail = NULL;
 	}
+	TokenList( const char[] );	// or create initial list
+	~TokenList()			// destructor -- clear the list
+	{
+	    ListElement *remove;
+	    while ( (remove = head) != NULL)
+	    {
+			head = head->next;	// find the successor
+			delete remove;		// and deallocate this
+	    }
+	}
+
+	bool empty() const
+	{
+	    return head == NULL;
+	}
+
+	Token first() const
+	{
+	    return head->token;
+	}
+
+	void push_back( Token t );
+	void push_front( Token t );
+	Token pop_front();
 
 	// and now some support for the List Iterator
 	ListIterator begin();
@@ -30,30 +66,42 @@ class ListIterator
 {
     friend class TokenList;	// let that class create iterators
     private:
-	TokenList   *list;	// which list
-	const char  *curr;	// current position
-	ListIterator( TokenList *l, const char *pos )
+	TokenList *list;	// which list
+	ListElement *curr;	// pointer to current node
+	ListIterator( TokenList *l, ListElement *le )
 	{
 	    list = l;
-	    curr = pos;
+	    curr = le;
 	}
     public:
-	char tokenChar() const
+	Token& token() const
 	{
-	    return *curr;		// get this character
+	    return curr->token;
+	}
+	char tokenChar()
+	{
+	    if (curr != NULL)
+ 		return curr->token.tokenChar();
+	    else
+		return 0;
 	}
 	bool currentIsInteger()
 	{
-	    return isdigit( *curr );	// examine this character
+	    return curr->token.isInteger();
 	}
 	int integerValue()
 	{
-	    return atoi( curr );	// convert string to int
+	    return curr->token.integerValue();
 	}
-	void advance();			// move forward through the data
-	void retreat();			// move backward through the data
+	void advance()
+	{
+	    if (curr != NULL)
+	    	curr = curr->next;
+	}
 	int operator !=( const ListIterator &other ) const
 	{
 	    return list != other.list || curr != other.curr;
 	}
 };
+	
+
