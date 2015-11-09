@@ -19,116 +19,159 @@ using namespace std;
 #include "tokenize.h"
 #include <iostream>
 
-int mult(const char[], int, int);
-int add(const char[], int, int);
+int parens(const char[], int&);
+int mult(const char[], int&);
+int add(const char[], int&);
 int findlength(const char[]);
 
 
 // linearly walk through function and evaluate chunks
 int evaluate(const char expr[])
 {
-	return add(expr, 0, findlength(expr));
-}
-
-
-
-
-int mult(const char expr[], int start, int end)
-{
-	int current = start, sum = 1, finder, value;
+	int length = findlength(expr);
+	int current = 0, sum = 0;
 	char term;
-
-	if (currentIsInteger(expr, current)) // initial value from first piece of product
-		value = integerValue(expr, current);
-	else
+	findFirstToken(expr, current);
+	while (current < length) // iterate through function
 	{
-		int counter = 1;
-		while (counter != 0)  // find other )
+		term = expr[current];
+		if (term == '(')
 		{
-			advance(expr, current);
-			if (expr[current] == '(')
-				counter += 1;
-			if (expr[current] == ')')
-				counter -= 1;
+			// Find 2nd parenthesis
+			int counter = 1, end = current;
+			advance(expr, end);
+			while (counter != 0)  // find other )
+			{
+				if (expr[end] == '(')
+					counter += 1;
+				if (expr[end] == ')')
+					counter -= 1;
+				advance(expr, end);
+			}
+			if (expr[end] == '*' || expr[end] == '/' || expr[end] == '%')
+			{
+				current = end;
+				sum +=mult(expr, current);
+			}
+			else
+				sum += parens(expr, current);
+
 		}
-		goback(expr, current);
-		value = add(expr, start, current);
+		if (term == '+' || term == '-')
+			sum += add(expr, current);
+		if (term == '*' || term == '/' || term == '%')
+			sum += mult(expr, current);
+		else
+			advance(expr, current);
 	}
+	// deal with fringe cases of addition
+	goback(expr, current);
+	int extra = integerValue(expr, current);
+	goback(expr, current);
+	if (expr[current] == '+')
+		sum += extra;
+	if (expr[current] == '-')
+		sum -= extra;
 
 
-	return value;
+	return sum;
 }
 
-
-int add(const char expr[], int start, int end)
+int parens(const char expr[], int& current)
 {
-	int sum = 0, current = start, previousPlus = start, flag = 0;
+	cout << "parens";
+	advance(expr, current);
+	int end  = current;
+	int counter = 1;
+	// Find 2nd parenthesis
+	while (counter != 0)  // find other )
+	{
+		if (expr[end] == '(')
+			counter += 1;
+		if (expr[end] == ')')
+			counter -= 1;
+		else
+			advance(expr, end);
+	}
 	char term;
-
+	int sum = 0;
 	while (current <= end) // iterate through function
 	{
 		term = expr[current];
-		if (term == '(') // find other paren, skip past
-		{
-			flag = 1;
-			int counter = 1;
-			while (counter != 0)  // find other )
-			{
-				advance(expr, current);
-				if (expr[current] == '(')
-					counter += 1;
-				if (expr[current] == ')')
-					counter -= 1;
-			}
-		}
+		if (term == '(')
+			sum += parens(expr, current);
+		if (term == '+' || term == '-')
+			sum += add(expr, current);
+		if (term == '*' || term == '/' || term == '%')
+			sum += mult(expr, current);
+		else
+			advance(expr, current);
+	}
+	// deal with fringe cases of addition
+	goback(expr, current);
+	int extra = integerValue(expr, current);
+	goback(expr, current);
+	if (expr[current] == '+')
+		sum += extra;
+	if (expr[current] == '-')
+		sum -= extra;
 
-		else if (term == '+' || term == '-' || term == '\0')//add section to the left to sum, store previousplus location
-		{
+	cout << expr[current];
 
-			if (previousPlus == start)
-			{
-				if (flag == 1) // flag is 1 if parenthesis exist
-				{
-					goback(expr, current);
-					advance(expr, previousPlus);
-					flag = 0;
-				}
-				goback(expr, current);
-				sum += mult(expr, previousPlus, current);
-				advance(expr, current);
-				advance(expr, current);
-				previousPlus = current;
-				goback(expr, current);
-			}
-			else
-			{
-				goback(expr, previousPlus);
-				term = expr[previousPlus];
-				advance(expr, previousPlus);
-				if (flag == 1)
-				{
-					goback(expr, current);
-					advance(expr, previousPlus);
-				}
-				goback(expr, current);
-				if (term == '+')
-					sum += mult(expr, previousPlus, current);
-				if (term == '-')
-					sum -= mult(expr, previousPlus, current);
-				if (flag == 1)
-				{
-					flag = 0;
-					advance(expr, current);
-				}
-				advance(expr, current);
-				previousPlus = current;
-				advance(expr, previousPlus);
-				advance(expr, current);
-			}
-		}
-		advance(expr, current);
+	return sum;
+}
 
-	}// once no + are left in outer level
+
+
+int mult(const char expr[], int& current)
+{
+	cout << "mult ";
+	int reverse = current, flag, left, right;
+	advance(expr, current);
+	if (expr[current] == '*')
+		flag = 1;
+	if (expr[current] == '/')
+		flag = 0;
+	if (expr[current] == '%')
+		flag = 2;
+	while (expr[reverse != '+' && expr[reverse] != '-') // solve right
+
+
+
+	while (expr[current != '+' && expr[current] != '-') // solve right
+
+
+
+	return 20;
+
+}
+
+
+// find left and right with mult or paren, add left and right
+int add(const char expr[], int& current)
+{
+	cout << "add ";
+	int sum, flag;
+	int reverse = current;
+	if (expr[current] == '+')
+		flag = 1;
+	if (expr[current] == '-')
+		flag = 0;
+
+	goback(expr, reverse);
+	advance(expr, current);
+	int left = integerValue(expr, reverse), right = integerValue(expr, current);
+	goback(expr, reverse);
+	advance(expr, current);
+
+	if (expr[reverse] == '*' || expr[reverse] == '/' || expr[reverse] == '%')
+		left = mult(expr, reverse);
+	if (expr[current] == '*' || expr[current] == '/' || expr[current] == '%')
+		right = mult(expr, current);
+	if (flag == 1)
+		sum = left + right;
+	if (flag == 0)
+		sum = left-right;
 	return sum;
 }
 
