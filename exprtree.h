@@ -4,17 +4,17 @@
 //  All objects in this structure are immutable --
 //  once constructed, they are never changed.
 //  They only be displayed or evaluated.
-//  DO NOT CHANGE (unless extra credit)
 #include <iostream>
 using namespace std;
 #include "vartree.h"
 #include "funmap.h"
+#include "machine.h"
 class ExprNode
 {
 public:
 	friend ostream& operator<<(ostream&, const ExprNode &);
 	virtual string toString() const = 0;	// facilitates << operator
-	virtual int evaluate(VarTree &v, FunctionDef &funs) const = 0;  // evaluate this node
+	virtual void compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const = 0;  // evaluate this node
 };
 class Value : public ExprNode
 {
@@ -22,7 +22,7 @@ private:
 	int value;
 public:
 	string toString() const;	// facilitates << operator
-	int evaluate(VarTree &v, FunctionDef &funs) const;
+	void compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const;
 	Value(int v)
 	{
 		value = v;
@@ -35,7 +35,7 @@ private:
 	string name;
 public:
 	string toString() const;	// facilitates << operator
-	int evaluate(VarTree &v, FunctionDef &funs) const;
+	void compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const;
 	Variable(string var)
 	{
 		name = var;
@@ -49,7 +49,7 @@ private:
 	ExprNode *left, *right;	 // operands
 public:
 	string toString() const;	// facilitates << operator
-	int evaluate(VarTree &v, FunctionDef &funs) const;
+	void compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const;
 	Operation(ExprNode *l, string o, ExprNode *r)
 	{
 		left = l;
@@ -64,7 +64,7 @@ private:
 	ExprNode *test, *trueCase, *falseCase;
 public:
 	string toString() const;	// facilitates << operator
-	int evaluate(VarTree &v, FunctionDef &funs) const;
+	void compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const;
 	Conditional(ExprNode *b, ExprNode *t, ExprNode *f)
 	{
 		test = b;
@@ -81,7 +81,7 @@ private:
 	int length; //number of parameters, used for tostring
 public:
 	string toString() const;
-	int evaluate(VarTree &v, FunctionDef &funs) const;
+	void compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const;
 	Function(string n, ExprNode *inparams[], int len)
 	{
 		length = len;

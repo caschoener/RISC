@@ -36,6 +36,7 @@ class VarTree
     friend ostream& operator<<( ostream&, VarTree & );
     private:
 	TreeNode *root;
+	int sizeVal = 0;
     public:
         VarTree()
 	{
@@ -43,6 +44,7 @@ class VarTree
 	}
 	void assign( string, int );
 	int lookup( string );
+	int size();
 
     private:		// these just help VarTree do its job
 	TreeNode* recursiveSearch( TreeNode *&, string );

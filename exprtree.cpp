@@ -3,7 +3,7 @@
 // arithmetic expressions using integer variables and values.
 // Some functions construct a tree from a character string that
 // represents the expression, and then the tree can be traversed
-// and evaluated.
+// and compiled.
 #include <iostream>
 #include <sstream>
 using namespace std;
@@ -16,8 +16,8 @@ ostream& operator<<(ostream &stream, const ExprNode &e)
 	return stream << e.toString();
 }
 
-// A Value is just an integer value -- easy to evaluate
-// Unfortunately, the string class does not have a constructor for it
+//// A Value is just an integer value -- easy to compile
+//// Unfortunately, the string class does not have a constructor for it
 string Value::toString() const
 {
 	ostringstream convert;	// output string stream
@@ -25,29 +25,34 @@ string Value::toString() const
 	return convert.str();	// and extract its string equivalent
 }
 
-int Value::evaluate(VarTree &v, FunctionDef &funs) const
+void Value::compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const
 {
-	return value;
+	prog[pEnd] = new Val(regL, value);
+	pEnd++;
+	regL++;
 }
 
-//  A variable is just an alphabetic string -- easy to display
-//  TO evaluate, would need to look it up in the data structure
+//
+////  A variable is just an alphabetic string -- easy to display
+////  TO compile, would need to look it up in the data structure
 string Variable::toString() const
 {
 	return name;
 }
 
-int Variable::evaluate(VarTree &v, FunctionDef &funs) const
+void Variable::compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const
 {
-	return v.lookup(name);
+	prog[pEnd] = new Var(regL, v.lookup(name));
+	pEnd++;
+	regL++;
 }
 
-int Conditional::evaluate(VarTree &v, FunctionDef &funs) const
+void Conditional::compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const
 {
-	if (test->evaluate(v, funs))
-		return trueCase->evaluate(v, funs);
-	else
-		return falseCase->evaluate(v, funs);
+	//if (test->compile(v, funs, prog))
+	//	return trueCase->compile(v, funs, prog);
+	//else
+	//	return falseCase->compile(v, funs, prog);
 }
 
 string Conditional::toString() const
@@ -56,41 +61,52 @@ string Conditional::toString() const
 	return a;
 }
 
-int Operation::evaluate(VarTree &v, FunctionDef &funs) const
+void Operation::compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const
 {
-	if (oper == "=")
+	if (oper == "=") //vartree now stores position in stack
 	{
-		v.assign(left->toString(), right->evaluate(v, funs));
-		return right->evaluate(v, funs);
+		int loc;
+		int size = v.size();
+		string name = left->toString();
+		if (v.lookup(name) == 0)
+		{
+			v.assign(name, size);
+			loc = size;
+		}
+		else
+			loc = v.lookup(name); // loc is stack position
+		right->compile(v, funs, prog, pBegin, pEnd, regL);
+		prog[pEnd] = new Assign(regL,regL-1, loc);
 	}
-	if (oper == ">")
-		return left->evaluate(v, funs) > right->evaluate(v, funs);
-	if (oper == "<")
-		return left->evaluate(v, funs) < right->evaluate(v, funs);
-	if (oper == ">=")
-		return left->evaluate(v, funs) >= right->evaluate(v, funs);
-	if (oper == "<=")
-		return left->evaluate(v, funs) <= right->evaluate(v, funs);
-	if (oper == "==")
-		return left->evaluate(v, funs) == right->evaluate(v, funs);
-	if (oper == "!=")
-		return left->evaluate(v, funs) != right->evaluate(v, funs);
-
-	if (oper == "+")
-		return left->evaluate(v, funs) + right->evaluate(v, funs);
-	if (oper == "-")
-		return left->evaluate(v, funs) - right->evaluate(v, funs);
-	if (oper == "*")
-		return left->evaluate(v, funs) * right->evaluate(v, funs);
-	if (oper == "/")
-		return left->evaluate(v, funs) / right->evaluate(v, funs);
-	if (oper == "l-")
-		return -(right->evaluate(v, funs));
-	if (oper == "l!")
-		return !(right->evaluate(v, funs));
-	else // if oper == %
-		return left->evaluate(v, funs) % right->evaluate(v, funs);
-
+	else
+	{
+		left->compile(v, funs, prog, pBegin, pEnd, regL);
+		int a = regL-1;
+		right->compile(v, funs, prog, pBegin, pEnd, regL);
+		int b = regL-1;
+		//if (oper == ">")
+		//	return left->compile(v, funs, prog) > right->compile(v, funs, prog);
+		//if (oper == "<")
+		//	return left->compile(v, funs, prog) < right->compile(v, funs, prog);
+		//if (oper == ">=")
+		//	return left->compile(v, funs, prog) >= right->compile(v, funs, prog);
+		//if (oper == "<=")
+		//	return left->compile(v, funs, prog) <= right->compile(v, funs, prog);
+		//if (oper == "==")
+		//	return left->compile(v, funs, prog) == right->compile(v, funs, prog);
+		//if (oper == "!=")
+		//	return left->compile(v, funs, prog) != right->compile(v, funs, prog);
+		if (oper == "+")
+			prog[pEnd] = new Add(regL, a,b);
+		if (oper == "-")
+			prog[pEnd] = new Sub(regL, a, b);
+		if (oper == "*")
+			prog[pEnd] = new Mult(regL, a,b);
+		if (oper == "/")
+			prog[pEnd] = new Div(regL, a, b);
+	}
+	pEnd++;
+	regL++;
 }
 
 string Operation::toString() const
@@ -104,17 +120,17 @@ string Operation::toString() const
 	return a;
 }
 
-int Function::evaluate(VarTree &v, FunctionDef &funs) const
+void Function::compile(VarTree &v, FunctionDef &funs, Instruction *prog[], int &pBegin, int &pEnd, int &regL) const
 {
-	int i = 0;
-	FunDef def = funs.at(name);
-	ExprNode * tester;
-	while (def.parameter[i] != "")
-	{
-		def.locals->assign(def.parameter[i], (*(params + i))->evaluate(v, funs));
-		i++;
-	}
-	return def.functionBody->evaluate(*def.locals, funs);
+	//int i = 0;
+	//FunDef def = funs.at(name);
+	//ExprNode * tester;
+	//while (def.parameter[i] != "")
+	//{
+	//	def.locals->assign(def.parameter[i], (*(params + i))->compile(v, funs, prog));
+	//	i++;
+	//}
+	//return def.functionBody->compile(*def.locals, funs, prog);
 }
 
 string Function::toString() const

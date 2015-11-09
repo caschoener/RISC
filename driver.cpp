@@ -1,25 +1,52 @@
 #include <iostream>
+#include <iomanip>
+#include <fstream>
 using namespace std;
 #include "evaluate.h"
 
-int main()
+const int CODE  = 100;
+const int STACK = 100;
+const int TEMPS = 100;
+
+int main( int argc, char *argv[] )
 {
-	char userInput[80];
-	VarTree vars;		// initially empty tree
-	FunctionDef funs;	
-	cout << "Define sqr" << endl;
-	evaluate("deffn sqr(x) = x*x", vars, funs);
-	cout << "define abs" << endl;
-	evaluate("deffn abs(x) = x > 0 ? x : -x", vars, funs);
-	cout << "define factorial" << endl;
-	evaluate("deffn fact(n) = n <= 1 ? 1 : n * fact(n-1)", vars, funs);
-	cout << "sqr(5): " << evaluate("sqr(5)", vars, funs) << endl;
-	cout << "Three = abs(0-3): " << evaluate("Three =  abs(0-3) ", vars, funs) << endl;
-	cout << "Fact(3): " << evaluate("fact(3)", vars, funs) << endl;
-	cout << endl << "Try one yourself:  ";
-	cin.getline(userInput, 80);
-	cout << userInput << " = " << evaluate(userInput, vars, funs) << endl;
-	cout << endl << "Try another:  ";
-	cin.getline(userInput, 80);
-	cout << userInput << " = " << evaluate(userInput, vars, funs) << endl;
-}
+    ifstream infile;
+    char fileLine[80];
+    VarTree vars;		// initially empty tree
+    FunctionDef funs;
+    Instruction *program[CODE];	// space for CODE instructions
+    int stack[STACK];		// stack space for STACK values
+    int temps[TEMPS];		// up to TEMPS temporary registers
+
+    int progBegin = 0;		// where to begin execution
+    int progEnd = 0;		// where program ends (first unused spot)
+    int stackPointer;		// pointer to stack memory
+    int programCounter;		// pointer to instruction
+	int regL = 0;			// first open register
+
+    if (argc < 2)
+    {
+	cout << "Call this program with a name of a file afterwards" << endl;
+    }
+    else
+    {
+	cout << argv[1];
+	infile.open( argv[1] );
+	while (infile.getline( fileLine, 100 ))
+	{
+	    cout << endl << fileLine << endl;
+	    compile( fileLine, vars, funs, program, progBegin, progEnd, regL );
+        }
+	for (int i=0; i<progEnd; i++)
+	    cout << i << ": " << *program[i] << endl;
+
+    programCounter = progBegin;
+	stackPointer = STACK - vars.size();
+	while (programCounter < progEnd)
+	{
+	    programCounter++;		// prepare for the next
+	    program[programCounter-1]->execute( 	// but execute this one
+		temps, stack, stackPointer, programCounter );	 
+	}
+    }
+}   

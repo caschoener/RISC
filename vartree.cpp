@@ -22,6 +22,7 @@ TreeNode* VarTree::recursiveSearch( TreeNode *&node, string name )
 	if (!node)
 	{
 		node = new TreeNode(name, 0);
+		sizeVal += 1;
 	}
 	else if (node->name != name)
 	{
@@ -61,6 +62,11 @@ void VarTree::assign( string name, int value )
 {
     TreeNode *node = recursiveSearch( root, name );
     node->value = value;
+}
+
+int VarTree::size()
+{
+	return sizeVal;
 }
 
 //  EXTRA CREDIT:  Implement the following, without any loops

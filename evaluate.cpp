@@ -16,13 +16,16 @@ ExprNode * parens(ListIterator &);
 ExprNode * equals(ListIterator &);
 ExprNode * condit(ListIterator &);
 ExprNode * relate(ListIterator &);
+void compile(const char expr[], VarTree &vars, FunctionDef &funs,
+	Instruction *prog[], int &pBegin, int &pEnd);
 
 
-int evaluate(const char exin[], VarTree &vars, FunctionDef &funs)
+
+void compile(const char exin[], VarTree &vars, FunctionDef &funs,
+	Instruction *prog[], int &pBegin, int &pEnd, int &regL)
 {
 	TokenList expr(exin);
 	ExprNode *tree;
-	//cout << "Tokenlist ->" << expr << endl;
 	ListIterator curr = expr.begin();
 	if (curr.tokenText() == "deffn")
 	{
@@ -42,14 +45,12 @@ int evaluate(const char exin[], VarTree &vars, FunctionDef &funs)
 		curr.advance();
 		funs[name].functionBody = equals(curr);
 		funs[name].locals = new VarTree;
-		cout << "Made new function " << name << endl;
-		return 0;
 	}
 
 	tree = equals(curr);
-	//cout << *tree << " : ";
-
-	return tree->evaluate(vars, funs);
+	tree->compile(vars, funs, prog, pBegin, pEnd, regL);
+	prog[pEnd] = new Print(regL - 1);
+	pEnd++;
 }
 
 ExprNode * equals(ListIterator &curr)

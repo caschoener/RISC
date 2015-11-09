@@ -29,5 +29,5 @@
 //	prog	(modified Inst array)	program code being generated
 //	pBegin	(output integer)	first instruction not in a function
 //	pEnd	(output integer)	program end (first unused spot)
-void compile(const char expr[], VarTree &vars, FunctionDef &funs,
-	Instruction *prog[], int &pBegin, int &pEnd, int &regL);
+void compile( const char expr[], VarTree &vars, FunctionDef &funs,
+	Instruction *prog[], int &pBegin, int &pEnd );
