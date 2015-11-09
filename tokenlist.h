@@ -7,6 +7,8 @@
 
 // There will be support for displaying the entire list at once
 #include <iostream>
+#include <string>
+#include <stdlib.h>
 using namespace std;
 
 // And of course, the tokens themselves
@@ -81,9 +83,14 @@ class ListIterator
 	char tokenChar()
 	{
 	    if (curr != NULL)
- 		return curr->token.tokenChar();
+ 			return curr->token.tokenChar();
 	    else
-		return 0;
+			return 0;
+	}
+	
+	bool currentIsVar()
+	{
+		return curr->token.isVar();
 	}
 	bool currentIsInteger()
 	{

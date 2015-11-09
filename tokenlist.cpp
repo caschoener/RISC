@@ -23,6 +23,7 @@ TokenList::TokenList( const char expr[])
     tail = NULL;
 	head = new ListElement;
 	int i = 0;
+	string temp;
 	ListElement *iter;
 	iter = head;
 	while (expr[i] == ' ')
@@ -30,7 +31,23 @@ TokenList::TokenList( const char expr[])
 	if (isdigit(expr[i]))
 		iter->token = expr[i] - 48;
 	else
-		iter->token = expr[i];
+	{
+		if (expr[i] == '+' || expr[i] == '-' || expr[i] == '%' || expr[i] == '*' || expr[i] == '/' || expr[i] == '=' || expr[i] == '(' || expr[i] == ')')
+			iter->token = expr[i];
+		else
+		{
+			while (!(isdigit(expr[i])) && expr[i] != '+' && expr[i] != '-' && expr[i] != '%' && expr[i] != '*' && expr[i] != '/'&& expr[i] != '=' && expr[i] != ' ' && expr[i] != '(' && expr[i] != ')')
+			{
+				temp += expr[i];
+				i++;
+			}
+			i--;
+			iter->token = temp;
+			temp = "";
+			
+		}
+	}
+
 	while (expr[i+1] != NULL)
 	{
 		i++;
@@ -39,9 +56,23 @@ TokenList::TokenList( const char expr[])
 			iter->next = new ListElement;
 			iter = iter->next;
 			if (isdigit(expr[i]))
-				iter->token =  expr[i] - 48;
+				iter->token = expr[i] - 48;
 			else
-				iter->token = expr[i];
+			{
+				if (expr[i] == '+' || expr[i] == '-' || expr[i] == '%' || expr[i] == '*' || expr[i] == '/' || expr[i] == '=' || expr[i] == '(' || expr[i] == ')')
+					iter->token = expr[i];
+				else
+				{
+					while (!(isdigit(expr[i])) && expr[i] != '+' && expr[i] != '-' && expr[i] != '%' && expr[i] != '*' && expr[i] != '/'&& expr[i] != '=' && expr[i] != ' ' && expr[i] != '(' && expr[i] != ')'&& expr[i] != NULL)
+					{
+						temp += expr[i];
+						i++;
+					}
+					iter->token = temp;
+					i--;
+					temp = "";
+				}
+			}
 		}
 	}
 	tail = iter;

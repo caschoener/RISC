@@ -7,8 +7,9 @@
 ostream& operator<<( ostream &stream, Token &t)
 {
     if (t.isNull())
-	return stream << "(null)";
+		return stream << "(null)";
     if (t.isInteger())
-	return stream <<  t.value;
-    else return stream <<  t.text;	// oper no longer exists
+		return stream <<  t.value;
+    else 
+		return stream <<  t.text;	// oper no longer exists
 }

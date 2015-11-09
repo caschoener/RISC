@@ -71,10 +71,18 @@ class Token {
 	{
 	    return isInt;
 	}
+	bool isVar()
+	{
+		if (isInt)
+			return 0;
+		if (tokenChar() == '+' || tokenChar() == '(' || tokenChar() == ')' || tokenChar() == '-' || tokenChar() == '*' || tokenChar() == '/' || tokenChar() == '%' || tokenChar() == '=')
+			return 0;
+		return 1;
+	}
 
 	int integerValue() const
 	{
-	    return value;
+		return value;
 	}
 	
 	string tokenText() const
