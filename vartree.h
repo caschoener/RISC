@@ -9,6 +9,7 @@
 #include <string>
 using namespace std;
 
+class VarTree;
 // A node anywhere in tree
 class TreeNode
 {

@@ -5,21 +5,16 @@ int main()
 {
 	char userInput[80];
 	VarTree vars;		// initially empty tree
-	vars.assign("seven", 7);
-	vars.assign("seven", 7);
-	vars.assign("eight", 8);
-	vars.assign("nine", 9);
-	vars.assign("ten", 10);
 
 
-	cout << "Five = 2 + 3 : " << evaluate("Five = 2 + 3", vars) << endl;
-	cout << "Five * 4 : " << evaluate(" Five * 4 ", vars) << endl;
-	cout << "Age = 2 + 3 * Five : " << evaluate("Age = 2+3*Five", vars) << endl;
+	cout <<evaluate("Five = 2 + 3", vars) << endl;
+	cout <<evaluate(" Five * 4 ", vars) << endl;
+	cout <<evaluate("Age = 2+3*Five", vars) << endl;
 	cout << vars;
 	cout << endl << "Try one yourself:  ";
 	cin.getline(userInput, 80);
-	cout << userInput << " = " << evaluate(userInput, vars) << endl;
+	cout <<evaluate(userInput, vars) << endl;
 	cout << endl << "Try another:  ";
 	cin.getline(userInput, 80);
-	cout << userInput << " = " << evaluate(userInput, vars) << endl;
+	cout<< evaluate(userInput, vars) << endl;
 }

@@ -10,6 +10,53 @@
 
 // And to get the definition of a token:
 #include "tokenlist.h"
+bool isOperator(const char *&str)
+{
+	if ((*str == '+' || *str == '-' || *str == '%' || *str == '*'
+		|| *str == '/' || *str == '(' || *str == ')' || *str == '=' 
+		|| *str == '>' || *str == '<' || *str == '!') || *str == ':' || *str == '?')
+		return 1;
+	else
+		return 0;
+}
+void getToken(const char *&str, Token &token)
+{
+	string temp;			// temporary text to work with
+
+	while (*str == ' ')			// skip any spaces
+		str++;
+
+	if (*str == NULL)			// at end of string
+	{
+		token = Token();
+	}
+	else if (isdigit(*str))
+	{
+		token = Token(atoi(str));		// convert to integer
+		while (isdigit(*str))
+			str++;			// scan past the intie
+	}
+	else if (isOperator(str))
+	{
+		temp = *str;
+		str++;
+		if (isOperator(str))
+		{
+			temp += *str;
+			str++;
+		}
+		token = Token(temp);
+	}
+	else
+	{
+		while (!isdigit(*(str))&&!(*(str) == ' ')&&!isOperator(str)&&!(*str == NULL))
+		{
+			temp += *str;
+			str++;
+		}
+		token = Token(temp);
+	}
+}
 
 // TokenList constructor
 // converts a character string into a list of tokens
@@ -17,66 +64,18 @@
 // 	expr	(input char pointer)	// string to examine
 // Pre-condition:  str may not be a null pointer
 //     and is assumed to actually point at a valid expression.
-TokenList::TokenList( const char expr[])
+TokenList::TokenList(const char expr[])
 {
-    head = NULL;			// clear these here too
-    tail = NULL;
-	head = new ListElement;
-	int i = 0;
-	string temp;
-	ListElement *iter;
-	iter = head;
-	while (expr[i] == ' ')
-		i++;
-	if (isdigit(expr[i]))
-		iter->token = expr[i] - 48;
-	else
+	head = NULL;			// clear these here too
+	tail = NULL;
+	Token current;
+	const char *str = expr;		// a copy of the pointer to work with
+	getToken(str, current);		// get the first token
+	while (!current.isNull())
 	{
-		if (expr[i] == '+' || expr[i] == '-' || expr[i] == '%' || expr[i] == '*' || expr[i] == '/' || expr[i] == '=' || expr[i] == '(' || expr[i] == ')')
-			iter->token = expr[i];
-		else
-		{
-			while (!(isdigit(expr[i])) && expr[i] != '+' && expr[i] != '-' && expr[i] != '%' && expr[i] != '*' && expr[i] != '/'&& expr[i] != '=' && expr[i] != ' ' && expr[i] != '(' && expr[i] != ')')
-			{
-				temp += expr[i];
-				i++;
-			}
-			i--;
-			iter->token = temp;
-			temp = "";
-			
-		}
+		push_back(current);
+		getToken(str, current);	// get another token
 	}
-
-	while (expr[i+1] != NULL)
-	{
-		i++;
-		if (expr[i] != ' ') // for each token in expression
-		{
-			iter->next = new ListElement;
-			iter = iter->next;
-			if (isdigit(expr[i]))
-				iter->token = expr[i] - 48;
-			else
-			{
-				if (expr[i] == '+' || expr[i] == '-' || expr[i] == '%' || expr[i] == '*' || expr[i] == '/' || expr[i] == '=' || expr[i] == '(' || expr[i] == ')')
-					iter->token = expr[i];
-				else
-				{
-					while (!(isdigit(expr[i])) && expr[i] != '+' && expr[i] != '-' && expr[i] != '%' && expr[i] != '*' && expr[i] != '/'&& expr[i] != '=' && expr[i] != ' ' && expr[i] != '(' && expr[i] != ')'&& expr[i] != NULL)
-					{
-						temp += expr[i];
-						i++;
-					}
-					iter->token = temp;
-					i--;
-					temp = "";
-				}
-			}
-		}
-	}
-	tail = iter;
-	tail->next = NULL;
 }
 
 //  output operation

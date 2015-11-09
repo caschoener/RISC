@@ -1,135 +1,138 @@
-// evaluates with postfix
+// evaluates with binary tree
 
 using namespace std;
 #include <iostream>
 #include "tokenlist.h"
 #include "token.h"
-#include "vartree.h"
+#include "exprtree.h"
 
-void add(ListIterator &, TokenList &);
-void mult(ListIterator &, TokenList &);
-void parens(ListIterator &, TokenList &);
-void equals(ListIterator &, TokenList &);
+//Each function calls the lower precedence function repeatedly while until it runs out of applicable operators
+//Each time a lower precedence function is called, its operator is made the root, with the previous root as left child and result as right child
 
-
+ExprNode * add(ListIterator &);
+ExprNode * mult(ListIterator &); 
+ExprNode * parens(ListIterator &);
+ExprNode * equals(ListIterator &);
+ExprNode * condit(ListIterator &);
+ExprNode * relate(ListIterator &);
 
 
 int evaluate(const char exin[], VarTree &vars)
 {
 	TokenList expr(exin), postfix, sum;
 	ListIterator curr = expr.begin();
-	equals(curr, postfix);
+	ExprNode *tree;
+	tree = equals(curr);
+
+	cout << *tree << " : ";
 	Token temp;
-	int a, b;
-	while (!postfix.empty())
-	{
-		temp = postfix.pop_front();
-		if (temp.isInteger() || temp.isVar())
-		{
-			sum.push_front(temp);
-		}
-		else
-		{
-			Token atok = sum.pop_front();
-			Token btok = sum.pop_front();
-			if (atok.isVar())
-			{
-				a = vars.lookup(atok.tokenText());
-			}
-			else
-				a = atok.integerValue();
-			if (btok.isVar())
-			{
-				b = vars.lookup(btok.tokenText());
-			}
-			else
-				b = btok.integerValue();
 
-			switch (temp.tokenChar()){
-			case '=': 
-				vars.assign(btok.tokenText(), a);
-				sum.push_front(a);
-				break;
-			case '+':
-				sum.push_front(b + a);
-				break;
-			case '-':
-				sum.push_front(b - a);
-				break;
-			case '*':
-				sum.push_front(b*a);
-				break;
-			case '/':
-				sum.push_front(b / a);
-				break;
-			case '%':
-				sum.push_front(b % a);
-				break;
-			}
-		}
-	}
-
-	return sum.pop_front().integerValue();
+	return tree->evaluate(vars);
 }
 
-void equals(ListIterator &curr, TokenList &postfix)
+ExprNode * equals(ListIterator &curr)
 {
-	char oper;
-	add(curr, postfix);
-	oper = curr.tokenChar();
-	while (oper == '=')
+	string oper;
+	ExprNode * left = condit(curr);
+	ExprNode * root = left;
+	if (curr.tokenChar() == NULL)
+		return root;
+	oper = curr.tokenText();
+	if (oper == "=")
 	{
 		curr.advance();
-		add(curr, postfix);
-		postfix.push_back(oper);
-		oper = curr.tokenChar();
+		ExprNode * right = condit(curr);
+		root = new Operation(left, oper, right);
 	}
+	return root;
+}
+ExprNode * condit(ListIterator &curr)
+{
+	string oper;
+	ExprNode * test = relate(curr);
+	ExprNode * root = test;
+	oper = curr.tokenChar();
+	if (oper == "?")
+	{
+		curr.advance();
+		ExprNode * left = relate(curr);
+		curr.advance();
+		ExprNode * right = relate(curr);
+		root = new Conditional(test, left, right);
+	}
+	return root;
+}
+ExprNode * relate(ListIterator &curr)
+{
+	string oper;
+	ExprNode * left = add(curr);
+	ExprNode * root = left;
+	if (curr.tokenChar() == NULL)
+		return root;
+	oper = curr.tokenText();
+	if (oper == ">" || oper == "<" || oper == ">=" || oper == "<=" || oper == "==" || oper == "!=")
+	{
+		curr.advance();
+		ExprNode * right = add(curr);
+		root = new Operation(left, oper, right);
+	}
+	return root;
 }
 
-
-void add(ListIterator &curr, TokenList &postfix)
+ExprNode * add(ListIterator &curr)
 {
-	char oper;
-	mult(curr, postfix);
+	string oper;
+	ExprNode * root;
+	root = mult(curr);
 	oper = curr.tokenChar();
-	while (oper == '+' || oper == '-')
+	while (oper == "+" || oper == "-")
 	{
 		curr.advance();
-		mult(curr, postfix);
-		postfix.push_back(oper);
+		ExprNode * right = mult(curr);
+		root = new Operation(root, oper, right);
 		oper = curr.tokenChar();
 	}
+	return root;
 }
 //mult
 //called by add, multiplies all terms until it reaches a +,-, or )
 //calls paren to find value of terms which are multiplied together
-void mult(ListIterator &curr, TokenList &postfix)
+ExprNode * mult(ListIterator &curr)
 {
-	parens(curr,postfix);
-	while (curr.tokenChar() == '*' || curr.tokenChar() == '/' || curr.tokenChar() == '%')
+	string oper;
+	ExprNode * root = parens(curr);
+	oper = curr.tokenChar();
+	while (oper == "*" || oper == "/" || oper == "%")
 	{
-		char tok = curr.tokenChar();
 		curr.advance();
-		parens(curr, postfix);
-		postfix.push_back(tok);
+		ExprNode * right = mult(curr);
+		root = new Operation(root, oper, right);
+		oper = curr.tokenChar();
 	}
+	return root;
 }
 
 //paren
 //called by mult, finds value of chunk inside operators
 //returns either standalone integer or calls add to find value of expression inside ( )
-void parens(ListIterator &curr, TokenList &postfix)
+ExprNode * parens(ListIterator &curr)
 {
-	
-	if (curr.currentIsInteger() || curr.currentIsVar())
+	ExprNode * root;
+	if (curr.currentIsInteger())
 	{
-		postfix.push_back(curr.token());
+		root = new Value(curr.integerValue());
+		curr.advance();
+	}
+	else if (curr.currentIsVar())
+	{
+		root = new Variable(curr.tokenText());
 		curr.advance();
 	}
 	else
 	{
 		curr.advance();
-		equals(curr,postfix);
+		root = equals(curr);
 		curr.advance();
 	}
+	return root;
 }
