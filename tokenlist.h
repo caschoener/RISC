@@ -100,9 +100,12 @@ class ListIterator
 	{
 	    return curr->token.integerValue();
 	}
-	string tokenText() //curr cannot be null
+	string tokenText() 
 	{
-		return curr->token.tokenText();
+		if (curr != NULL)
+			return curr->token.tokenText();
+		else
+			return "";
 	}
 	void advance()
 	{

@@ -19,7 +19,7 @@ using namespace std;
 //      even if it had to be created to do so
 TreeNode* VarTree::recursiveSearch( TreeNode *&node, string name )
 {	
-	if (node == NULL)
+	if (!node)
 	{
 		node = new TreeNode(name, 0);
 	}

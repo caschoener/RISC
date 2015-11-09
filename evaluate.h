@@ -14,6 +14,7 @@
 // There is no specification on the length of any expression.
 
 #include "vartree.h"
+#include "funmap.h"
 
 // Evaluate
 // Evaluate the given expression, with the given variables defined
@@ -21,4 +22,4 @@
 // Parameters:
 //	expr	(input char array)	expression to evaluate
 //	vars	(modified VarTree)	variables to work with
-int evaluate(const char expr[], VarTree &vars);
+int evaluate(const char expr[], VarTree &vars, FunctionDef &funs);

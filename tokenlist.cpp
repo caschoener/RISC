@@ -14,7 +14,7 @@ bool isOperator(const char *&str)
 {
 	if ((*str == '+' || *str == '-' || *str == '%' || *str == '*'
 		|| *str == '/' || *str == '(' || *str == ')' || *str == '=' 
-		|| *str == '>' || *str == '<' || *str == '!') || *str == ':' || *str == '?')
+		|| *str == '>' || *str == '<' || *str == '!') || *str == ':' || *str == '?' || *str == ',')
 		return 1;
 	else
 		return 0;
@@ -40,7 +40,7 @@ void getToken(const char *&str, Token &token)
 	{
 		temp = *str;
 		str++;
-		if (isOperator(str))
+		if (*str == '=')
 		{
 			temp += *str;
 			str++;
@@ -76,6 +76,8 @@ TokenList::TokenList(const char expr[])
 		push_back(current);
 		getToken(str, current);	// get another token
 	}
+	if (tail != NULL) // tail gets formatted wrong if - is in front, too lazy to figure out why
+		tail->next = NULL;
 }
 
 //  output operation

@@ -5,29 +5,51 @@ using namespace std;
 #include "tokenlist.h"
 #include "token.h"
 #include "exprtree.h"
+#include "funmap.h"
 
 //Each function calls the lower precedence function repeatedly while until it runs out of applicable operators
 //Each time a lower precedence function is called, its operator is made the root, with the previous root as left child and result as right child
 
 ExprNode * add(ListIterator &);
-ExprNode * mult(ListIterator &); 
+ExprNode * mult(ListIterator &);
 ExprNode * parens(ListIterator &);
 ExprNode * equals(ListIterator &);
 ExprNode * condit(ListIterator &);
 ExprNode * relate(ListIterator &);
 
 
-int evaluate(const char exin[], VarTree &vars)
+int evaluate(const char exin[], VarTree &vars, FunctionDef &funs)
 {
-	TokenList expr(exin), postfix, sum;
-	ListIterator curr = expr.begin();
+	TokenList expr(exin);
 	ExprNode *tree;
+	//cout << "Tokenlist ->" << expr << endl;
+	ListIterator curr = expr.begin();
+	if (curr.tokenText() == "deffn")
+	{
+		curr.advance();
+		string name = curr.tokenText();
+		funs[name].name = name; // lol
+		int i = 0;
+		curr.advance();
+		while (curr.tokenText() != ")")
+		{
+			curr.advance();
+			funs[name].parameter[i] = curr.tokenText();
+			curr.advance();
+			i++;
+		}
+		curr.advance();
+		curr.advance();
+		funs[name].functionBody = equals(curr);
+		funs[name].locals = new VarTree;
+		cout << "Made new function " << name << endl;
+		return 0;
+	}
+
 	tree = equals(curr);
+	//cout << *tree << " : ";
 
-	cout << *tree << " : ";
-	Token temp;
-
-	return tree->evaluate(vars);
+	return tree->evaluate(vars, funs);
 }
 
 ExprNode * equals(ListIterator &curr)
@@ -79,16 +101,31 @@ ExprNode * relate(ListIterator &curr)
 	return root;
 }
 
+
 ExprNode * add(ListIterator &curr)
 {
 	string oper;
 	ExprNode * root;
-	root = mult(curr);
+	ExprNode * right;
+	if (curr.tokenText() == "-")
+	{
+		curr.advance();
+		right = mult(curr);
+		root = new Operation(NULL, "l-", right);
+	}
+	else if (curr.tokenText() == "!")
+	{
+		curr.advance();
+		right = mult(curr);
+		root = new Operation(NULL, "l!", right);
+	}
+	else
+		root = mult(curr);
 	oper = curr.tokenChar();
 	while (oper == "+" || oper == "-")
 	{
 		curr.advance();
-		ExprNode * right = mult(curr);
+		right = mult(curr);
 		root = new Operation(root, oper, right);
 		oper = curr.tokenChar();
 	}
@@ -125,8 +162,25 @@ ExprNode * parens(ListIterator &curr)
 	}
 	else if (curr.currentIsVar())
 	{
-		root = new Variable(curr.tokenText());
+		string name = curr.tokenText();
 		curr.advance();
+		if (curr.tokenText() == "(") // if is function call
+		{
+			ExprNode *params[10];
+			int i = 0;
+			while (curr.tokenText() != ")")
+			{
+				curr.advance();
+				params[i] = equals(curr);
+				i++;
+			}
+			root = new Function(name, params, i);
+			curr.advance(); //past )
+		}
+		else
+		{
+			root = new Variable(name);
+		}
 	}
 	else
 	{
